@@ -9,6 +9,7 @@ import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.ObjectError;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -49,6 +50,10 @@ public class RompecabezasController {
                 binding2.rejectValue("file", "error.file", "Solo se aceptan archivos PNG o JPEG.");
                 return "inicio";
             }
+            
+            if(file == null || file.getSize() == 0){
+                return "inicio";
+            }
 
             InputStream inputStream = file.getInputStream();
             byte[] bytes = inputStream.readAllBytes();
@@ -64,4 +69,6 @@ public class RompecabezasController {
             return "redirect:/puzzle/inicio";
         }
     }
+
+
 }
