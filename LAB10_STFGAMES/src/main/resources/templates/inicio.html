@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <link rel="stylesheet" th:href="@{/css/bootstrap.min.css}">
+    <link rel="stylesheet" th:href="@{/css/fontawesome-all.min.css}">
+
+    <style>
+        .btn-p {
+            display: inline-block;
+            padding: 12px 20px;
+            color:white;
+            background-color: #0ea134;
+            text-decoration: none;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 17px;
+        }
+    </style>
+    <title>Iniciar Juegoo</title>
+</head>
+<body>
+
+<form method="post" th:action="@{/puzzle/form}" th:object="${puzzle}">
+    <div style="display: flex; flex-direction: row; justify-content: start; gap: 10px">
+        <div class="input-label-box">
+            <label style="font-weight: bold; color:dimgray; font-size: medium">Ingrese el tamaño del tablero</label>
+            <input class="input-form-dni" type="text"  th:field="*{n}" placeholder="Ingrese el tamaño del tablero"  th:classappend="${#fields.hasErrors('n') ? 'is-invalid' : ''}" required>
+            <div  class="invalid-feedback" style="font-size: small" th:if="${#fields.hasErrors('n')}" th:errors="*{n}"></div>
+        </div>
+
+        <div class="input-label-box" th:object="${validateImage}">
+            <div style="width: 600px;font-size:14px;display: flex;flex-direction: row;justify-content: center;padding-left: 66px;margin-bottom: 4px" class="invalid-feedback"
+                 th:if="${#fields.hasErrors('file')}" th:errors="*{file}">
+            </div>
+            <div class="input-label-box" >
+                <input th:field="*{file}" type="file" accept="image/png, image/jpeg">
+            </div>
+        </div>
+        <div style="margin-top: 37px" >
+            <button type="submit" id="buscarDni" class="btn btn-p">Verificar</button>
+        </div>
+    </div>
+</form>
+
+<div style="margin-top: 37px" th:if="${(es_valido==1)}">
+    <button type="submit" class="btn btn-p">Iniciar el juego</button>
+</div>
+
+<div id='content' align='center'>
+    <div id="titulo">Juego iniciado</div>
+    <div id='conf'>
+        <span>Nro de piezas:</span>
+        <div th:value="*{n}" id='piezas'></div>
+        <div><span>Pulsa en un cuadro y luego en otro para intercambiar sus posiciones!!</span></div>
+    </div>
+</div>
+
+<script>
+    var select = false;
+    var c = "inc";
+    var pos_s = "";
+    var id_s = "";
+
+    var rompecabezas = {
+        _arr_pos_r : new Array(),
+        _arr_pos_a : new Array(),
+
+        _mostrar: function(){
+            rompecabezas._arr_pos_r.length = 0;
+            var piezas = rompecabezas._get("piezas").value;
+            var tb = document.createElement('table');
+            tb.border = 1;
+            tb.align = 'center';
+            tb.cellPadding = 0;
+            tb.cellSpacing = 0;
+            var dp = document.createElement('div');
+            dp.id = 'posiciones';
+            dp.className = 'posic';
+            var ar = Math.sqrt(piezas);
+            var c = 0;
+            var tam_img = 300;
+            var pos_img = tam_img / ar;
+            for(var fil=1;fil<=ar;fil++){
+                var tr = document.createElement('tr');
+                for(var cel=1;cel<=ar;cel++){
+                    c++;
+                    var td = document.createElement('td');
+                    td.className = 'pieza';
+                    td.id = 'pos_'+c;
+                    td.style.width = pos_img+'px';
+                    td.style.height = pos_img+'px';
+                    var dbp = document.createElement('div');
+                    dbp.id = 'val_bp_'+c;
+                    var p = Math.round(((pos_img*cel)-pos_img) * -1)+'px '+Math.round(((fil * pos_img)-pos_img) * -1)+'px';
+                    td.style.backgroundPosition = p;
+                    rompecabezas._arr_pos_r.push(p);
+                    dbp.innerHTML = p;
+                    dp.appendChild(dbp);
+                    td.onclick = function(){
+                        rompecabezas._cambiaBGP(this.id);
+                        rompecabezas._compruebaFin();
+                    }
+                    tr.appendChild(td);
+                }
+                tb.appendChild(tr);
+            }
+            if(!rompecabezas._get("div_content")){
+                var cont = document.createElement('div');
+                cont.id = 'div_content';
+                cont.appendChild(tb);
+                cont.appendChild(dp);
+                document.body.appendChild(cont);
+            }else{
+                rompecabezas._get("div_content").innerHTML = '';
+                rompecabezas._get("div_content").appendChild(tb);
+                rompecabezas._get("div_content").appendChild(dp);
+                rompecabezas._get("posiciones").removeClass('posic');
+                rompecabezas._get("posiciones").innerHTML = '';
+                rompecabezas._get("posiciones").className = 'posic';
+            }
+        },
+
+        _barajar: function(){
+            var num_alt = null;
+            var arr = new Array();
+            var resp = "no";
+            var i = -1;
+            var repite = "no";
+            var pie = parseInt(rompecabezas._get("piezas").value);
+            var pie1 = pie + 1;
+            while(arr.length < pie){
+                repite = "no";
+                num_alt = Math.floor(Math.random()*pie1);
+                if(num_alt != 0){
+                    if(arr.length == 0){
+                        i++;
+                        arr[i] = num_alt;
+                    }else{
+                        for(j=0;j<=arr.length-1;j++){
+                            if(arr[j] == num_alt){
+                                repite = "si";
+                            }
+                        }
+                        if(repite != "si"){
+                            i++;
+                            arr[i] = num_alt;
+                        }
+                    }
+                }
+            }
+
+            var id = 0;
+            for(k=0; k<=arr.length-1;k++){
+                id = k-(-1);
+                rompecabezas._get("pos_"+id).style.backgroundPosition = rompecabezas._get("val_bp_"+arr[k]).innerHTML;
+            }
+        },
+
+        _cambiaBGP: function(id){
+            if(select == false){
+                pos_s = rompecabezas._get(id).style.backgroundPosition;
+                id_s = id;
+                select = true;
+                rompecabezas._get(id_s).style.boxShadow = '1px 1px 14px #FFF,-1px -1px 14px #FFF, 1px -1px 14px #FFF,-1px 1px 14px #FFF';
+            }else{
+                var pos_n =  rompecabezas._get(id).style.backgroundPosition;
+                var id_n = id;
+                c = "com";
+                select = false;
+            }
+
+            if(c == "com"){ rompecabezas._get(id_n).style.backgroundPosition = pos_s; rompecabezas._get(id_s).style.backgroundPosition = pos_n;
+                c = "inc";
+                rompecabezas._get(id_s).style.boxShadow = '';
+            }
+        },
+
+        _compruebaFin: function(){
+            var pie = parseInt(rompecabezas._get("piezas").value);
+            var fin = false;
+            rompecabezas._arr_pos_a.length = 0;
+            for(var i=1;i<=pie;i++){
+                rompecabezas._arr_pos_a.push(rompecabezas._get("pos_"+i).style.backgroundPosition);
+            }
+            for(var j=0;j<rompecabezas._arr_pos_r.length;j++){
+                if(rompecabezas._arr_pos_r[j] != rompecabezas._arr_pos_a[j]){
+                    fin = false;
+                    break;
+                }else{
+                    fin = true;
+                }
+            }
+
+            if(fin){
+                alert("JUEGO TERMINADO!")
+            }
+        },
+
+        _get: function(id){
+            return document.getElementById(id);
+        }
+    };
+
+
+    window.onload = function(){
+        rompecabezas._mostrar();
+        rompecabezas._barajar();
+        rompecabezas._get("piezas").onchange = function(){
+            rompecabezas._mostrar();
+        }
+        rompecabezas._get("barajar").onclick = function(){
+            rompecabezas._barajar();
+        }
+    }
+</script>
+</body>
+</html>
